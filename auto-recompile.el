@@ -80,11 +80,10 @@
 (defun auto-recompile-successful (buffer)
   (and buffer
        (buffer-live-p buffer)
-       (let
-	   ((proc (get-buffer-process buffer)))
-	 (and proc
-	      (eq (process-status proc 'exit))
-	      (eq (process-exit-status proc 0))))))
+       (let ((proc (get-buffer-process buffer)))
+         (and proc
+              (eq (process-status proc 'exit))
+              (eq (process-exit-status proc 0))))))
 
 (defun auto-recompile-has-error (buffer)
   (and (and buffer
@@ -194,27 +193,24 @@
   (not (buffer-live-p buffer)))
 
 (defun auto-recompile-start-compilation ()
-  (if
-      (or (get-buffer "*compilation*") next-error-last-buffer)
+  (if (or (get-buffer "*compilation*")
+          next-error-last-buffer)
       (progn
-	(set-buffer (or (get-buffer "*compilation*") next-error-last-buffer))
-	
-	(let ((thisdir default-directory))
-	      ;(stack compilation-directory-stack))
-	  
-	  ;; Find the directory where the compilation was started
-	  ;;(while (cdr stack)
-	  ;;(setq stack (cdr stack)))
-	  (setq default-directory compilation-directory)
-	  
-	  (compile compile-command)
-	  (setq auto-recompile-start-time (current-time))
-	  (setq auto-recompile-last-error-buffer 'nil)
-	  (setq auto-recompile-buffer-list (cons next-error-last-buffer auto-recompile-buffer-list))
-	  
-	  ;; Set the directory back
-	  (setq default-directory thisdir)
-	  ))))
+        (set-buffer (or (get-buffer "*compilation*")
+                        next-error-last-buffer))
+        (let ((thisdir default-directory))
+                                        ;(stack compilation-directory-stack))
+
+          ;; Find the directory where the compilation was started
+          ;;(while (cdr stack)
+          ;;(setq stack (cdr stack)))
+          (setq default-directory compilation-directory)
+          (compile compile-command)
+          (setq auto-recompile-start-time (current-time))
+          (setq auto-recompile-last-error-buffer 'nil)
+          (setq auto-recompile-buffer-list (cons next-error-last-buffer auto-recompile-buffer-list))
+          ;; Set the directory back
+          (setq default-directory thisdir)))))
 
 
 (defun auto-recompile-kill-all ()
@@ -225,113 +221,124 @@
   (auto-recompile-kill-compilation next-error-last-buffer))
 
 (defun auto-recompile-atime (file)
-  (car (nthcdr 4 (file-attributes file))))
+  (car (nthcdr 4
+               (file-attributes file))))
 
 (defun auto-recompile-matime (file)
-  (car (nthcdr 5 (file-attributes file))))
+  (car (nthcdr 5
+               (file-attributes file))))
 
 (defun auto-recompile-try-update-atime (file)
   (with-temp-buffer
-   (insert-file-contents-literally file'nil 0 1 't)))
+    (insert-file-contents-literally file 'nil
+                                    0 1 't)))
 
 ;; This shows why I don't like lisp
-(defun auto-recompile-time-ge (x y)  (or (> (car x) (car y)) (and (= (car x) (car y)) (>= (cadr x) (cadr y)))))
+(defun auto-recompile-time-ge (x y)
+  (or (> (car x) (car y))
+      (and (= (car x) (car y))
+           (>= (cadr x) (cadr y)))))
 
 ;; This doesn't work properly
-;(defun auto-recompile-check-atime()
-;  (let ((backup-name (car (find-backup-file-name buffer-file-name)))
-;	(atime (auto-recompile-atime backup-name)))
-;    (if (and auto-recompile-start-time
-;	     (auto-recompile-time-ge auto-recompile-start-time atime))
-;	(progn
-;	  (auto-recompile-try-update-atime backup-name)
-;	  (message (format "Passed first bar %S %S %S %S" auto-recompile-start-time atime (auto-recompile-atime backup-name) (auto-recompile-time-ge atime (auto-recompile-atime backup-name))))
-;	  (not (auto-recompile-time-ge atime (auto-recompile-atime backup-name))))
-;      nil)))
+                                        ;(defun auto-recompile-check-atime()
+                                        ;  (let ((backup-name (car (find-backup-file-name buffer-file-name)))
+                                        ;	(atime (auto-recompile-atime backup-name)))
+                                        ;    (if (and auto-recompile-start-time
+                                        ;	     (auto-recompile-time-ge auto-recompile-start-time atime))
+                                        ;	(progn
+                                        ;	  (auto-recompile-try-update-atime backup-name)
+                                        ;	  (message (format "Passed first bar %S %S %S %S" auto-recompile-start-time atime (auto-recompile-atime backup-name) (auto-recompile-time-ge atime (auto-recompile-atime backup-name))))
+                                        ;	  (not (auto-recompile-time-ge atime (auto-recompile-atime backup-name))))
+                                        ;      nil)))
 
-(defun auto-recompile-check-atime() nil)
+(defun auto-recompile-check-atime ()
+  nil)
 
-(defun auto-recompile-save-hook()
-  (if (and 
-       auto-recompile-mode
-       (or (get-buffer "*compilation*") next-error-last-buffer))
+(defun auto-recompile-save-hook ()
+  (if (and auto-recompile-mode
+           (or (get-buffer "*compilation*")
+               next-error-last-buffer))
       (if (and next-error-last-buffer
-	       (auto-recompile-is-active next-error-last-buffer)
-	       (auto-recompile-check-atime))
-	  (message "No need to recompile.")
-	(progn
-	  (setq next-error-last-buffer (compilation-find-buffer))
-	  (auto-recompile-kill-all)
-	  (if (auto-recompile-has-error next-error-last-buffer)
-	      (let
-		  ((saved-comp-buffer next-error-last-buffer))
-		(auto-recompile-start-compilation)
- 		(setq next-error-last-buffer saved-comp-buffer))
-	    (auto-recompile-start-compilation)))
-	(message (format "Auto-compiling into *auto-recompile-%d*" auto-recompile-current)))))
+               (auto-recompile-is-active next-error-last-buffer)
+               (auto-recompile-check-atime))
+          (message "No need to recompile.")
+        (progn
+          (setq next-error-last-buffer (compilation-find-buffer))
+          (auto-recompile-kill-all)
+          (if (auto-recompile-has-error next-error-last-buffer)
+              (let ((saved-comp-buffer next-error-last-buffer))
+                (auto-recompile-start-compilation)
+                (setq next-error-last-buffer saved-comp-buffer))
+            (auto-recompile-start-compilation)))
+        (message (format "Auto-compiling into *auto-recompile-%d*"
+                         auto-recompile-current)))))
 
-(defun auto-recompile()
+(defun auto-recompile ()
   "Toggles auto-recompile mode on or off."
   (interactive)
   (if auto-recompile-mode
       (progn
-	(setq auto-recompile-mode nil)
-	(remove-hook 'after-save-hook 'auto-recompile-save-hook)
-	(message "Auto-recompile mode is off"))
+        (setq auto-recompile-mode nil)
+        (remove-hook 'after-save-hook 'auto-recompile-save-hook)
+        (message "Auto-recompile mode is off"))
     (define-key ctl-x-map "`" 'auto-recompile-next-error)
     (setq auto-recompile-mode t)
     (add-hook 'after-save-hook 'auto-recompile-save-hook)
     (message "Auto-recompile mode is on")))
 
-(defun auto-recompile-test-no-error() 
+(defun auto-recompile-test-no-error ()
   (compile "sleep 20")
-  (let ((buffer (get-buffer "*compilation*"))) 
+  (let ((buffer (get-buffer "*compilation*")))
     (if (auto-recompile-has-error buffer)
-	(signal 'auto-recompile-has-error-false-positive-1 nil))
+        (signal 'auto-recompile-has-error-false-positive-1
+                nil))
     (sleep-for 1)
     (if (auto-recompile-has-error buffer)
-	(signal 'auto-recompile-has-error-false-positive-2 nil))
+        (signal 'auto-recompile-has-error-false-positive-2
+                nil))
     (auto-recompile-kill-compilation buffer)))
 
 
-(defun auto-recompile-test-error() 
+(defun auto-recompile-test-error ()
   (setenv "COLON" ":")
   (compile "echo /etc/services${COLON}20${COLON} Syntax error;sleep 20")
   (sleep-for 1)
-  (let ((buffer (get-buffer "*compilation*"))) 
+  (let ((buffer (get-buffer "*compilation*")))
     (if (not buffer)
-      (signal 'auto-recompile-compilation-buffer-not-found nil))
+        (signal 'auto-recompile-compilation-buffer-not-found
+                nil))
     (if (not (auto-recompile-is-active buffer))
-      (signal 'auto-recompile-compilation-buffer-not-active nil))
+        (signal 'auto-recompile-compilation-buffer-not-active
+                nil))
     (if (not (auto-recompile-has-error buffer))
-      (signal 'auto-recompile-has-error-false-negative nil))
+        (signal 'auto-recompile-has-error-false-negative
+                nil))
     (next-error 1)
     (if (auto-recompile-has-error buffer)
-      (signal 'auto-recompile-has-error-false-positive-after-next-error nil))
-    (auto-recompile-kill-compilation buffer)
-    ))
-
-  
-(defun auto-recompile-test-live-buffer() 
-  (compile "echo test")
-  (let ((buffer (get-buffer "*compilation*"))) 
-    (sleep-for 1)
-    (if (auto-recompile-is-active buffer)
-      (signal 'auto-recompile-compilation-buffer-active-when-dead nil))
+        (signal 'auto-recompile-has-error-false-positive-after-next-error
+                nil))
     (auto-recompile-kill-compilation buffer)))
 
 
-(defun auto-recompile-test()
+(defun auto-recompile-test-live-buffer ()
+  (compile "echo test")
+  (let ((buffer (get-buffer "*compilation*")))
+    (sleep-for 1)
+    (if (auto-recompile-is-active buffer)
+        (signal 'auto-recompile-compilation-buffer-active-when-dead
+                nil))
+    (auto-recompile-kill-compilation buffer)))
+
+
+(defun auto-recompile-test ()
   "Unit tests for auto recompile."
   (interactive)
-
   (auto-recompile-test-no-error)
   (sleep-for 1)
   (auto-recompile-test-error)
   (sleep-for 1)
   (auto-recompile-test-live-buffer)
-  "success"
-  )
+  "success")
 
 (provide 'auto-recompile)
 
