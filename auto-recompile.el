@@ -92,8 +92,7 @@
              (end nil)
              (msg nil)
              (result nil))
-         (save-excursion
-           (set-buffer buffer)
+         (with-current-buffer buffer
            (setq pt (or compilation-current-error
                         compilation-messages-start
                         (point-min)))
