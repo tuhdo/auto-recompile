@@ -82,8 +82,8 @@
        (buffer-live-p buffer)
        (let ((proc (get-buffer-process buffer)))
          (and proc
-              (eq (process-status proc 'exit))
-              (eq (process-exit-status proc 0))))))
+              (eq (process-status proc) 'exit)
+              (eq (process-exit-status proc) 0)))))
 
 (defun auto-recompile-has-error (buffer)
   (and (and buffer
