@@ -60,14 +60,14 @@
 ;;
 ;;; Code:
 
-(defvar auto-recompile-mode 'nil)
+(defvar auto-recompile-mode nil)
 (defvar auto-recompile-current 0)
-(defvar auto-recompile-buffer-list 'nil)
-(defvar auto-recompile-start-time 'nil)
-(defvar auto-reocmpile-use-atime 'nil)
-(defvar auto-recompile-last-error-buffer 'nil)
-(defvar auto-recompile-save 't)
-(defvar auto-recompile-debug 't)
+(defvar auto-recompile-buffer-list nil)
+(defvar auto-recompile-start-time nil)
+(defvar auto-reocmpile-use-atime nil)
+(defvar auto-recompile-last-error-buffer nil)
+(defvar auto-recompile-save t)
+(defvar auto-recompile-debug nil)
 
 (defun auto-recompile-debug-message (msg)
   (if auto-recompile-debug
@@ -82,8 +82,8 @@
        (buffer-live-p buffer)
        (let ((proc (get-buffer-process buffer)))
          (and proc
-              (eq (process-status proc 'exit))
-              (eq (process-exit-status proc 0))))))
+              (eq (process-status proc) 'exit)
+              (eq (process-exit-status proc) 0)))))
 
 (defun auto-recompile-has-error (buffer)
   (and (and buffer
@@ -92,8 +92,7 @@
              (end nil)
              (msg nil)
              (result nil))
-         (save-excursion
-           (set-buffer buffer)
+         (with-current-buffer buffer
            (setq pt (or compilation-current-error
                         compilation-messages-start
                         (point-min)))
@@ -207,7 +206,7 @@
           (setq default-directory compilation-directory)
           (compile compile-command)
           (setq auto-recompile-start-time (current-time))
-          (setq auto-recompile-last-error-buffer 'nil)
+          (setq auto-recompile-last-error-buffer nil)
           (setq auto-recompile-buffer-list (cons next-error-last-buffer auto-recompile-buffer-list))
           ;; Set the directory back
           (setq default-directory thisdir)))))
@@ -230,8 +229,8 @@
 
 (defun auto-recompile-try-update-atime (file)
   (with-temp-buffer
-    (insert-file-contents-literally file 'nil
-                                    0 1 't)))
+    (insert-file-contents-literally file nil
+                                    0 1 t)))
 
 ;; This shows why I don't like lisp
 (defun auto-recompile-time-ge (x y)
@@ -239,7 +238,7 @@
       (and (= (car x) (car y))
            (>= (cadr x) (cadr y)))))
 
-;; This doesn't work properly
+;; This doesnt work properly
                                         ;(defun auto-recompile-check-atime()
                                         ;  (let ((backup-name (car (find-backup-file-name buffer-file-name)))
                                         ;	(atime (auto-recompile-atime backup-name)))
